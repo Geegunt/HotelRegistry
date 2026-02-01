@@ -1,0 +1,35 @@
+# Пример содержимого .gitignore
+# Системные файлы
+.DS_Store
+.history
+.localized
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Временные файлы
+*.pyc
+__pycache__/
+*.log
+
+# Бинарные файлы
+*.app/
+*.dSYM/
+*.exe
+*.zip
+
+# Зависимости
+venv/
+node_modules/
+
+# Операционные системы
+*.mp4
+*.png
+*.jpg
+*.pdf
+*.docx
+*.pptx
+*.xlsx
