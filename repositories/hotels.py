@@ -5,9 +5,12 @@ from repositories.base import BaseRepository
 from src.models.hotels import HotelsOrm
 from pydantic import BaseModel
 
+from src.schemas.hotels import Hotel
+
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
+    schema = Hotel
 
     async def get_all(
             self,
@@ -15,7 +18,7 @@ class HotelsRepository(BaseRepository):
             title,
             limit,
             offset,
-    ):
+    ) -> list[Hotel]:
         query = select(HotelsOrm)
         if location:
             query = query.filter(func.lower(HotelsOrm.location).contains(location.strip().lower()))
@@ -30,15 +33,7 @@ class HotelsRepository(BaseRepository):
         print(query.compile(compile_kwargs={"literal_binds": True}))
         result = await self.session.execute(query)
 
-        return result.scalars().all()
-
-    async def add(
-            self,
-            data: BaseModel,
-    ):
-        add_data_stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
-        result = await self.session.execute(add_data_stmt)
-        return result.scalars().one()
+        return [Hotel.model_validate(hotel, from_attributes=True) for hotel in result.scalars().all()]
 
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by):
         update_stmt = ((update(self.model)
