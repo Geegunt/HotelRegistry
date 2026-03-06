@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
-from sqlalchemy.sql.expression import insert, update, delete
+from sqlalchemy.sql.expression import update, delete
 
-from repositories.base import BaseRepository
+from src.repositories.base import BaseRepository
 from src.models.hotels import HotelsOrm
 from pydantic import BaseModel
 
