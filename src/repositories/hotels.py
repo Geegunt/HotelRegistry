@@ -35,13 +35,3 @@ class HotelsRepository(BaseRepository):
 
         return [Hotel.model_validate(hotel, from_attributes=True) for hotel in result.scalars().all()]
 
-    async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by):
-        update_stmt = ((update(self.model)
-                       .filter_by(**filter_by)
-                        .values(**data.model_dump(exclude_unset=True)))
-        )
-        await self.session.execute(update_stmt)
-
-    async def delete(self, **filter_by):
-        delete_stmt = delete(self.model).filter_by(**filter_by)
-        await self.session.execute(delete_stmt)
