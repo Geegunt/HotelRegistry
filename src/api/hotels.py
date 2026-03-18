@@ -4,6 +4,7 @@ from src.api.dependencies import PaginationDep, DBDep
 from src.schemas.hotels import Hotel, HotelAdd
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
+from datetime import date
 
 
 @router.get("", summary="получение списка отелей/отеля")
@@ -11,14 +12,24 @@ async def get_hotels(
         pagination: PaginationDep,
         db: DBDep,
         title: str | None = Query(None, description="Название отеля"),
-        location: str | None = Query(None, description="Адрес")
+        location: str | None = Query(None, description="Адрес"),
+        date_from: date = Query(example='2026-03-01'),
+        date_to: date = Query(example='2026-03-07'),
  ):
     per_page = pagination.per_page or 5
-    return await db.hotels.get_all(
-        location=location,
+    # return await db.hotels.get_all(
+    #     location=location,
+    #     title=title,
+    #     limit=per_page or 5,
+    #     offset=per_page * (pagination.page - 1)
+    # )
+    return await db.hotels.get_filtered_by_time(
+        date_from=date_from,
+        date_to=date_to,
         title=title,
-        limit=per_page or 5,
-        offset=per_page * (pagination.page - 1)
+        location=location,
+        limit=per_page,
+        offset = per_page * (pagination.page - 1),
     )
 
 @router.get("/{hotel_id}")
