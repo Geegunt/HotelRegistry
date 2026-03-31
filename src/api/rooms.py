@@ -23,7 +23,7 @@ async def get_room(
         db: DBDep,
         hotel_id: int,
         room_id: int):
-    return await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
+    return await db.rooms.get_one_or_none_with_rels(id=room_id, hotel_id=hotel_id)
 
 
 @router.post("/{hotel_id}/rooms")
@@ -31,9 +31,13 @@ async def create_room(
         db: DBDep,
         hotel_id: int,
         room_data: RoomAddRequest = Body()):
-    _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
+    _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump(exclude={"facilities_ids"}))
     room = await db.rooms.add(_room_data)
+
+    facilities_ids = list(set(room_data.facilities_ids))
+    await db.rooms_facilities.sync_room_facilities(room_id=room.id, incoming_ids=facilities_ids)
     await db.commit()
+
     return {"status": "OK", "data": room}
 
 
@@ -42,9 +46,11 @@ async def edit_room(
         db: DBDep,
         hotel_id: int,
         room_id: int,
-        room_data: RoomAddRequest):
+        room_data: RoomAddRequest
+):
     _room_data = RoomAdd(hotel_id=hotel_id, **room_data.model_dump())
     await db.rooms.edit(_room_data, id=room_id)
+    await db.rooms_facilities.set_room_facilities(room_id=room_id, facilities_ids=room_data.facilities_ids)
     await db.commit()
     return {"status": "OK"}
 
@@ -56,8 +62,12 @@ async def partially_edit_room(
         room_id: int,
         room_data: RoomPatchRequest,
 ):
-    _room_data = RoomPatch(hotel_id=hotel_id, **room_data.model_dump(exclude_unset=True))
-    await db.rooms.edit(_room_data, exclude_unset=True, id=room_id, hotel_id=hotel_id)
+    _room_data_dict = room_data.model_dump(exclude_unset=True)
+    _room_data = RoomPatch(hotel_id=hotel_id, **_room_data_dict)
+    await db.rooms.edit(_room_data, id=room_id, hotel_id=hotel_id)
+    if "facilities_ids" in _room_data_dict:
+        await db.rooms_facilities.set_room_facilities(room_id=room_id, facilities_ids=_room_data_dict["facilities_ids"])
+
     await db.commit()
     return {"status": "OK"}
 
